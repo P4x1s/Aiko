@@ -90,17 +90,35 @@ const handleRegister = async () => {
     return
   }
 
-  const { error: authError } = await supabase.auth.signUp({
-    email: email.value,
-    password: password.value,
-  })
+  try {
+    const { data, error: authError } = await supabase.auth.signUp({
+      email: email.value,
+      password: password.value,
+    })
 
-  if (authError) {
-    error.value = authError.message === 'User already registered'
-      ? '该邮箱已注册'
-      : authError.message
-  } else {
-    success.value = '注册成功！请检查邮箱确认链接'
+    if (authError) {
+      const msg = authError.message || ''
+      if (msg.includes('already registered') || msg.includes('already exists')) {
+        error.value = '该邮箱已注册'
+      } else if (msg.includes('valid email')) {
+        error.value = '请输入有效的邮箱地址'
+      } else if (msg.includes('password')) {
+        error.value = '密码至少需要6位'
+      } else {
+        error.value = msg || '注册失败，请稍后重试'
+      }
+    } else if (data?.user) {
+      // Check if email confirmation is required
+      if (data.user.identities?.length === 0) {
+        error.value = '该邮箱已注册'
+      } else {
+        success.value = '注册成功！请检查邮箱中的确认链接'
+      }
+    } else {
+      error.value = '注册失败，请稍后重试'
+    }
+  } catch (e: any) {
+    error.value = '网络错误，请稍后重试'
   }
 
   loading.value = false

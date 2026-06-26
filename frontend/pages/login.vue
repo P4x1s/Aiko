@@ -65,17 +65,28 @@ const handleLogin = async () => {
   loading.value = true
   error.value = ''
 
-  const { error: authError } = await supabase.auth.signInWithPassword({
-    email: email.value,
-    password: password.value,
-  })
+  try {
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: email.value,
+      password: password.value,
+    })
 
-  if (authError) {
-    error.value = authError.message === 'Invalid login credentials'
-      ? '邮箱或密码错误'
-      : authError.message
-  } else {
-    navigateTo('/dashboard')
+    if (authError) {
+      const msg = authError.message || ''
+      if (msg.includes('Invalid login credentials')) {
+        error.value = '邮箱或密码错误'
+      } else if (msg.includes('Email not confirmed')) {
+        error.value = '请先验证邮箱后再登录'
+      } else if (msg.includes('not found')) {
+        error.value = '账号不存在，请先注册'
+      } else {
+        error.value = msg || '登录失败'
+      }
+    } else {
+      navigateTo('/dashboard')
+    }
+  } catch (e) {
+    error.value = '网络错误，请稍后重试'
   }
 
   loading.value = false
