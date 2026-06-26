@@ -7,7 +7,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from .database import settings
 
-SECRET_KEY = settings.supabase_service_key
+SECRET_KEY = settings.supabase_jwt_secret
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 

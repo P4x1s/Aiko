@@ -13,7 +13,7 @@ Unified AI API proxy for Chinese developers. Access OpenAI, Anthropic, Google, a
 
 1. Clone the repository
 2. Copy `backend/.env.example` to `backend/.env` and add your keys
-3. Deploy to Vercel
+3. Deploy to Vercel with the **Root Directory** set to `backend`
 
 ## API Usage
 

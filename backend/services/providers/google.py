@@ -1,3 +1,6 @@
+import json
+import time
+
 import httpx
 from typing import Any, AsyncIterator
 
@@ -54,8 +57,6 @@ class GoogleProvider(BaseProvider):
                 response.raise_for_status()
                 async for line in response.aiter_lines():
                     if line.startswith("data: "):
-                        import json
-
                         event = json.loads(line[6:])
                         yield self._format_response(event)
 
@@ -66,13 +67,22 @@ class GoogleProvider(BaseProvider):
         content = candidates[0].get("content", {})
         parts = content.get("parts", [])
         text = "".join(part.get("text", "") for part in parts)
+        usage = response.get("usageMetadata", {})
         return {
+            "id": f"google-{int(time.time())}",
+            "model": response.get("modelVersion", ""),
+            "created": int(time.time()),
             "choices": [
                 {
                     "message": {"role": "assistant", "content": text},
                     "finish_reason": "stop",
                 }
-            ]
+            ],
+            "usage": {
+                "prompt_tokens": usage.get("promptTokenCount", 0),
+                "completion_tokens": usage.get("candidatesTokenCount", 0),
+                "total_tokens": usage.get("totalTokenCount", 0),
+            },
         }
 
     def get_model_name(self, model: str) -> str:

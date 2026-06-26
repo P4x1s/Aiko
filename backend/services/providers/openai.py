@@ -1,3 +1,5 @@
+import json
+
 import httpx
 from typing import Any, AsyncIterator
 
@@ -58,8 +60,6 @@ class OpenAIProvider(BaseProvider):
                         data = line[6:]
                         if data.strip() == "[DONE]":
                             break
-                        import json
-
                         yield json.loads(data)
 
     def get_model_name(self, model: str) -> str:

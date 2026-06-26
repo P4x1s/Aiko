@@ -1,3 +1,6 @@
+import json
+import time
+
 import httpx
 from typing import Any, AsyncIterator
 
@@ -67,8 +70,6 @@ class AnthropicProvider(BaseProvider):
                 response.raise_for_status()
                 async for line in response.aiter_lines():
                     if line.startswith("data: "):
-                        import json
-
                         event = json.loads(line[6:])
                         if event.get("type") == "content_block_delta":
                             yield {
@@ -88,7 +89,11 @@ class AnthropicProvider(BaseProvider):
             for block in content
             if block.get("type") == "text"
         )
+        usage = response.get("usage", {})
         return {
+            "id": response.get("id", ""),
+            "model": response.get("model", ""),
+            "created": int(time.time()),
             "choices": [
                 {
                     "message": {
@@ -97,7 +102,12 @@ class AnthropicProvider(BaseProvider):
                     },
                     "finish_reason": "stop",
                 }
-            ]
+            ],
+            "usage": {
+                "prompt_tokens": usage.get("input_tokens", 0),
+                "completion_tokens": usage.get("output_tokens", 0),
+                "total_tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
+            },
         }
 
     def get_model_name(self, model: str) -> str:
