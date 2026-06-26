@@ -6,14 +6,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo('/login')
   }
 
-  // Check if user is admin
-  const { data } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.value.id)
-    .single()
+  // 从用户元数据中读取角色
+  const role = user.value.user_metadata?.role
 
-  if (!data || data.role !== 'admin') {
+  if (role !== 'admin') {
     return navigateTo('/dashboard')
   }
 })

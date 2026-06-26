@@ -13,16 +13,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  // 检查用户是否还在数据库中
-  const { data } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('id', user.value.id)
-    .single()
-
-  // 如果用户不存在，登出并跳转到登录页
-  if (!data) {
-    await supabase.auth.signOut()
-    return navigateTo('/login')
-  }
+  // 简单检查：用户存在即可，角色通过 user_metadata 检查
+  // 不再查询 profiles 表，避免 RLS 问题
 })

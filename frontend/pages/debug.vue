@@ -16,70 +16,34 @@
       </div>
       <div>
         <div class="text-sm text-gray-500">角色 (role)</div>
-        <div class="font-mono text-sm">{{ role || '未知' }}</div>
+        <div class="font-mono text-sm">{{ user?.user_metadata?.role || 'user' }}</div>
       </div>
       <div>
         <div class="text-sm text-gray-500">是否管理员</div>
         <div class="font-mono text-sm">{{ isAdmin ? '是' : '否' }}</div>
       </div>
-      <div v-if="error">
-        <div class="text-sm text-red-500">错误</div>
-        <div class="font-mono text-sm text-red-600">{{ error }}</div>
-      </div>
-      <div v-if="rawData">
-        <div class="text-sm text-gray-500">原始数据</div>
-        <pre class="font-mono text-xs bg-gray-100 p-2 rounded overflow-auto">{{ JSON.stringify(rawData, null, 2) }}</pre>
+      <div>
+        <div class="text-sm text-gray-500">用户元数据</div>
+        <pre class="font-mono text-xs bg-gray-100 p-2 rounded overflow-auto">{{ JSON.stringify(user?.user_metadata, null, 2) }}</pre>
       </div>
     </div>
 
-    <div class="mt-4">
-      <button
-        @click="refresh"
-        class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-800"
-      >
-        刷新数据
-      </button>
+    <div class="mt-6 border rounded-xl p-6">
+      <h2 class="font-semibold mb-4">设置管理员角色</h2>
+      <p class="text-sm text-gray-500 mb-4">在 Supabase SQL Editor 执行以下 SQL：</p>
+      <pre class="bg-gray-900 text-green-400 p-4 rounded-lg text-sm overflow-auto"><code>-- 将用户设为管理员（替换用户ID）
+UPDATE auth.users
+SET raw_user_meta_data = raw_user_meta_data || '{"role": "admin"}'::jsonb
+WHERE id = '8e09d6f9-c340-4e10-97f6-cad88e13c670';</code></pre>
+      <p class="text-xs text-gray-400 mt-2">执行后需要重新登录才能生效</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 const user = useSupabaseUser()
-const supabase = useSupabaseClient()
 
-const role = ref('')
-const isAdmin = ref(false)
-const error = ref('')
-const rawData = ref<any>(null)
-
-const refresh = async () => {
-  if (!user.value) {
-    error.value = '未登录'
-    return
-  }
-
-  try {
-    const { data, error: supaError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.value.id)
-      .maybeSingle()
-
-    if (supaError) {
-      error.value = supaError.message
-      return
-    }
-
-    rawData.value = data
-    role.value = data?.role || '无'
-    isAdmin.value = data?.role === 'admin'
-    error.value = ''
-  } catch (e: any) {
-    error.value = e.message
-  }
-}
-
-onMounted(() => {
-  refresh()
+const isAdmin = computed(() => {
+  return user.value?.user_metadata?.role === 'admin'
 })
 </script>

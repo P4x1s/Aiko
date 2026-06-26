@@ -54,48 +54,14 @@
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 
-const isAdmin = ref(false)
-const debugInfo = ref('')
-
-const checkAdmin = async () => {
-  if (!user.value) {
-    isAdmin.value = false
-    return
-  }
-
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.value.id)
-      .maybeSingle()
-
-    if (error) {
-      debugInfo.value = `Error: ${error.message}`
-      isAdmin.value = false
-      return
-    }
-
-    isAdmin.value = data?.role === 'admin'
-    debugInfo.value = `User: ${user.value.id}, Role: ${data?.role}`
-  } catch (e: any) {
-    debugInfo.value = `Exception: ${e.message}`
-    isAdmin.value = false
-  }
-}
+const isAdmin = computed(() => {
+  if (!user.value) return false
+  // 从用户元数据中读取角色
+  return user.value.user_metadata?.role === 'admin'
+})
 
 const handleLogout = async () => {
   await supabase.auth.signOut()
   navigateTo('/login')
 }
-
-// 页面加载时检查
-onMounted(() => {
-  checkAdmin()
-})
-
-// 监听用户变化
-watch(user, () => {
-  checkAdmin()
-}, { immediate: true })
 </script>
