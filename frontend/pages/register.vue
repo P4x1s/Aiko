@@ -71,7 +71,13 @@ definePageMeta({
   layout: 'default',
 })
 
+const user = useSupabaseUser()
 const supabase = useSupabaseClient()
+
+if (user.value) {
+  navigateTo('/dashboard')
+}
+
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')

@@ -54,11 +54,17 @@ definePageMeta({
   layout: 'default',
 })
 
+const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
+
+// 已登录则跳转到控制台
+if (user.value) {
+  navigateTo('/dashboard')
+}
 
 const handleLogin = async () => {
   loading.value = true
