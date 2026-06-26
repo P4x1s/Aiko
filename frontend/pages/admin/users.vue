@@ -101,7 +101,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-  middleware: 'auth',
+  middleware: 'admin',
 })
 
 const users = ref<any[]>([])

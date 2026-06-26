@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-  middleware: 'auth',
+  middleware: 'admin',
 })
 
 const stats = ref({

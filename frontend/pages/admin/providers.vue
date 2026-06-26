@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-  middleware: 'auth',
+  middleware: 'admin',
 })
 
 const providerStats = ref<Record<string, { requests: number; cost: number }>>({})

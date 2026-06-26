@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-  middleware: 'auth',
+  middleware: 'admin',
 })
 
 const requests = ref<any[]>([])

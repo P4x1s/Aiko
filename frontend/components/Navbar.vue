@@ -24,7 +24,7 @@
             <NuxtLink to="/dashboard/billing" class="text-sm text-gray-600 hover:text-gray-900">
               余额
             </NuxtLink>
-            <NuxtLink to="/admin" class="text-sm text-gray-600 hover:text-gray-900">
+            <NuxtLink v-if="isAdmin" to="/admin" class="text-sm text-gray-600 hover:text-gray-900">
               管理
             </NuxtLink>
             <span class="text-gray-200">|</span>
@@ -60,8 +60,33 @@
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 
+const isAdmin = ref(false)
+
+const checkAdmin = async () => {
+  if (!user.value) {
+    isAdmin.value = false
+    return
+  }
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.value.id)
+    .single()
+
+  isAdmin.value = data?.role === 'admin'
+}
+
 const handleLogout = async () => {
   await supabase.auth.signOut()
   navigateTo('/login')
 }
+
+onMounted(() => {
+  checkAdmin()
+})
+
+watch(user, () => {
+  checkAdmin()
+})
 </script>
