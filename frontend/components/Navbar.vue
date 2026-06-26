@@ -1,25 +1,28 @@
 <template>
-  <nav class="bg-white shadow-sm border-b">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between h-16">
-        <div class="flex items-center">
-          <NuxtLink to="/" class="flex items-center space-x-2">
-            <span class="text-xl font-bold text-indigo-600">🤖 艾柯 Aiko</span>
+  <nav class="border-b bg-white sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="flex justify-between h-14 items-center">
+        <div class="flex items-center space-x-8">
+          <NuxtLink to="/" class="flex items-center space-x-2 font-semibold text-gray-900">
+            <span class="text-lg">🤖 Aiko</span>
           </NuxtLink>
+          <div class="hidden md:flex items-center space-x-6 text-sm text-gray-500">
+            <NuxtLink to="/" class="hover:text-gray-900 transition">首页</NuxtLink>
+            <a href="#features" class="hover:text-gray-900 transition">功能</a>
+            <a href="#models" class="hover:text-gray-900 transition">模型</a>
+            <a href="#pricing" class="hover:text-gray-900 transition">价格</a>
+          </div>
         </div>
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-3">
           <template v-if="user">
-            <NuxtLink to="/dashboard" class="text-gray-600 hover:text-indigo-600">
+            <NuxtLink to="/dashboard" class="text-sm text-gray-600 hover:text-gray-900">
               控制台
             </NuxtLink>
-            <NuxtLink to="/dashboard/keys" class="text-gray-600 hover:text-indigo-600">
-              API Keys
-            </NuxtLink>
-            <span class="text-gray-400">|</span>
-            <span class="text-gray-600 text-sm">{{ user.email }}</span>
+            <span class="text-gray-200">|</span>
+            <span class="text-sm text-gray-500">{{ user.email }}</span>
             <button
               @click="handleLogout"
-              class="text-gray-500 hover:text-red-600 text-sm"
+              class="text-sm text-gray-400 hover:text-red-500 transition"
             >
               退出
             </button>
@@ -27,13 +30,13 @@
           <template v-else>
             <NuxtLink
               to="/login"
-              class="text-gray-600 hover:text-indigo-600"
+              class="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5"
             >
               登录
             </NuxtLink>
             <NuxtLink
               to="/register"
-              class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm"
+              class="text-sm bg-gray-900 text-white px-4 py-1.5 rounded-md hover:bg-gray-800 transition"
             >
               注册
             </NuxtLink>
