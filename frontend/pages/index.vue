@@ -83,7 +83,7 @@ curl https://aiko-five.vercel.app/v1/chat/completions \
     <section id="models" class="py-16 px-4">
       <div class="max-w-6xl mx-auto">
         <h2 class="text-2xl font-bold text-center text-gray-900 mb-3">支持的模型</h2>
-        <p class="text-center text-gray-500 mb-12">主流 AI 厂商全覆盖</p>
+        <p class="text-center text-gray-500 mb-12">国内外主流 AI 厂商全覆盖</p>
         <div class="grid md:grid-cols-3 gap-6">
           <div class="border rounded-xl p-6">
             <div class="flex items-center gap-3 mb-4">
@@ -117,6 +117,39 @@ curl https://aiko-five.vercel.app/v1/chat/completions \
               <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>Gemini 1.5 Pro</li>
               <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>Gemini 1.5 Flash</li>
               <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>Gemini Pro</li>
+            </ul>
+          </div>
+          <div class="border rounded-xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-sm">🔴</div>
+              <span class="font-semibold">百度</span>
+            </div>
+            <ul class="space-y-2 text-sm text-gray-600">
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>ERNIE 4.0</li>
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>ERNIE 3.5</li>
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>ERNIE Speed</li>
+            </ul>
+          </div>
+          <div class="border rounded-xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-sm">🟣</div>
+              <span class="font-semibold">阿里</span>
+            </div>
+            <ul class="space-y-2 text-sm text-gray-600">
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>Qwen Max</li>
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>Qwen Plus</li>
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>Qwen Turbo</li>
+            </ul>
+          </div>
+          <div class="border rounded-xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center text-sm">🔷</div>
+              <span class="font-semibold">智谱 & DeepSeek</span>
+            </div>
+            <ul class="space-y-2 text-sm text-gray-600">
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>GLM-4</li>
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>GLM-4 Flash</li>
+              <li class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>DeepSeek Chat</li>
             </ul>
           </div>
         </div>

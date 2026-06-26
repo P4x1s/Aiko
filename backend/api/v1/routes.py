@@ -7,7 +7,15 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
 
 from api.schemas import ChatCompletionRequest
-from services.providers import OpenAIProvider, AnthropicProvider, GoogleProvider
+from services.providers import (
+    OpenAIProvider,
+    AnthropicProvider,
+    GoogleProvider,
+    BaiduProvider,
+    AlibabaProvider,
+    ZhipuProvider,
+    DeepSeekProvider,
+)
 from services.api_key_service import verify_api_key
 from services.billing_service import get_balance, deduct_balance, record_usage
 from services.token_counter import count_message_tokens, calculate_cost
@@ -21,22 +29,55 @@ if os.getenv("ANTHROPIC_API_KEY"):
     providers["anthropic"] = AnthropicProvider(api_key=os.getenv("ANTHROPIC_API_KEY"))
 if os.getenv("GOOGLE_API_KEY"):
     providers["google"] = GoogleProvider(api_key=os.getenv("GOOGLE_API_KEY"))
+if os.getenv("BAIDU_API_KEY"):
+    providers["baidu"] = BaiduProvider(
+        api_key=os.getenv("BAIDU_API_KEY"),
+        secret_key=os.getenv("BAIDU_SECRET_KEY", ""),
+    )
+if os.getenv("ALIBABA_API_KEY"):
+    providers["alibaba"] = AlibabaProvider(api_key=os.getenv("ALIBABA_API_KEY"))
+if os.getenv("ZHIPU_API_KEY"):
+    providers["zhipu"] = ZhipuProvider(api_key=os.getenv("ZHIPU_API_KEY"))
+if os.getenv("DEEPSEEK_API_KEY"):
+    providers["deepseek"] = DeepSeekProvider(api_key=os.getenv("DEEPSEEK_API_KEY"))
 
 model_provider_map: dict[str, str] = {
+    # OpenAI
     "gpt-4": "openai",
     "gpt-4-turbo": "openai",
     "gpt-4o": "openai",
     "gpt-4o-mini": "openai",
     "gpt-3.5-turbo": "openai",
+    # Anthropic
     "claude-3-opus": "anthropic",
     "claude-3-opus-20240229": "anthropic",
     "claude-3-sonnet": "anthropic",
     "claude-3-sonnet-20240229": "anthropic",
     "claude-3-haiku": "anthropic",
     "claude-3-haiku-20240307": "anthropic",
+    # Google
     "gemini-pro": "google",
     "gemini-1.5-pro": "google",
     "gemini-1.5-flash": "google",
+    # Baidu
+    "ernie-4.0": "baidu",
+    "ernie-3.5": "baidu",
+    "ernie-3.5-8k": "baidu",
+    "ernie-speed": "baidu",
+    # Alibaba
+    "qwen-max": "alibaba",
+    "qwen-plus": "alibaba",
+    "qwen-turbo": "alibaba",
+    "qwen-long": "alibaba",
+    # Zhipu
+    "glm-4": "zhipu",
+    "glm-4-flash": "zhipu",
+    "glm-3-turbo": "zhipu",
+    "glm-4-plus": "zhipu",
+    # DeepSeek
+    "deepseek-chat": "deepseek",
+    "deepseek-coder": "deepseek",
+    "deepseek-v2": "deepseek",
 }
 
 
@@ -111,7 +152,6 @@ async def chat_completions(
                 )
                 async for chunk in iterator:
                     yield f"data: {json.dumps(chunk)}\n\n"
-                    # Count output tokens from chunks
                     if "choices" in chunk:
                         for choice in chunk["choices"]:
                             if "delta" in choice and "content" in choice["delta"]:
@@ -119,7 +159,6 @@ async def chat_completions(
 
                 yield "data: [DONE]\n\n"
 
-                # Calculate and deduct cost
                 cost = calculate_cost(request.model, input_tokens, output_tokens)
                 latency_ms = int((time.time() - start_time) * 1000)
 
@@ -147,7 +186,6 @@ async def chat_completions(
                 **kwargs,
             )
 
-            # Calculate output tokens
             output_tokens = 0
             if "usage" in result:
                 output_tokens = result["usage"].get("completion_tokens", 0)
@@ -157,7 +195,6 @@ async def chat_completions(
                         output_tokens = count_message_tokens([{"content": choice["message"]["content"]}])
                         break
 
-            # Calculate and deduct cost
             cost = calculate_cost(request.model, input_tokens, output_tokens)
             latency_ms = int((time.time() - start_time) * 1000)
 

@@ -52,6 +52,25 @@ MODEL_PRICING = {
     "gemini-pro": {"input": 0.0035, "output": 0.0105},
     "gemini-1.5-pro": {"input": 0.035, "output": 0.105},
     "gemini-1.5-flash": {"input": 0.0035, "output": 0.0105},
+    # Baidu
+    "ernie-4.0": {"input": 0.12, "output": 0.12},
+    "ernie-3.5": {"input": 0.008, "output": 0.008},
+    "ernie-3.5-8k": {"input": 0.008, "output": 0.008},
+    "ernie-speed": {"input": 0.001, "output": 0.001},
+    # Alibaba
+    "qwen-max": {"input": 0.02, "output": 0.06},
+    "qwen-plus": {"input": 0.004, "output": 0.012},
+    "qwen-turbo": {"input": 0.002, "output": 0.006},
+    "qwen-long": {"input": 0.0005, "output": 0.002},
+    # Zhipu
+    "glm-4": {"input": 0.1, "output": 0.1},
+    "glm-4-flash": {"input": 0.001, "output": 0.001},
+    "glm-3-turbo": {"input": 0.005, "output": 0.005},
+    "glm-4-plus": {"input": 0.05, "output": 0.05},
+    # DeepSeek
+    "deepseek-chat": {"input": 0.002, "output": 0.008},
+    "deepseek-coder": {"input": 0.002, "output": 0.008},
+    "deepseek-v2": {"input": 0.002, "output": 0.008},
 }
 
 
