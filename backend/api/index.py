@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.v1 import routes as v1_routes
 from api.billing_routes import router as billing_router
 from api.admin_routes import router as admin_router
+from api.keys_routes import router as keys_router
 
 app = FastAPI(
     title="艾柯 (Aiko) API 中转站",
@@ -21,6 +22,7 @@ app.add_middleware(
 app.include_router(v1_routes.router)
 app.include_router(billing_router)
 app.include_router(admin_router)
+app.include_router(keys_router)
 
 
 @app.get("/")
@@ -33,6 +35,7 @@ async def root():
             "models": "/v1/models",
             "chat": "/v1/chat/completions",
             "billing": "/api/billing/*",
+            "keys": "/api/keys",
             "admin": "/api/admin/*",
         },
     }

@@ -38,7 +38,10 @@
       <div class="px-6 py-4 border-b">
         <h2 class="font-semibold">交易记录</h2>
       </div>
-      <div v-if="transactions.length === 0" class="p-12 text-center text-gray-400">
+      <div v-if="loading" class="p-12 text-center text-gray-400">
+        加载中...
+      </div>
+      <div v-else-if="transactions.length === 0" class="p-12 text-center text-gray-400">
         暂无交易记录
       </div>
       <div v-else class="divide-y">
@@ -139,10 +142,14 @@ definePageMeta({
   middleware: 'auth',
 })
 
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
+
 const balance = ref(0)
 const transactions = ref<any[]>([])
 const stats = ref({ total_requests: 0, total_cost: 0 })
 const tiers = ref<any[]>([])
+const loading = ref(true)
 const showRechargeModal = ref(false)
 const selectedTier = ref<any>(null)
 const selectedMethod = ref('alipay')
@@ -156,12 +163,39 @@ const paymentMethods = [
 ]
 
 const loadData = async () => {
-  // TODO: Load from API
+  loading.value = true
+  try {
+    const [balanceRes, historyRes, statsRes, tiersRes] = await Promise.all([
+      $fetch<{ balance: number }>(`${apiBase}/api/billing/balance`),
+      $fetch<{ transactions: any[] }>(`${apiBase}/api/billing/history`),
+      $fetch<{ total_requests: number; total_cost: number }>(`${apiBase}/api/billing/stats`),
+      $fetch<{ tiers: any[] }>(`${apiBase}/api/billing/pricing`),
+    ])
+    balance.value = balanceRes.balance
+    transactions.value = historyRes.transactions || []
+    stats.value = statsRes
+    tiers.value = tiersRes.tiers || []
+  } catch (e) {
+    console.error('Failed to load billing data:', e)
+  }
+  loading.value = false
 }
 
 const handlePayment = async () => {
   paying.value = true
-  // TODO: Create payment order
+  try {
+    const response = await $fetch<any>(`${apiBase}/api/billing/create-payment`, {
+      method: 'POST',
+      body: {
+        tier_id: selectedTier.value.id,
+        payment_method: selectedMethod.value,
+      },
+    })
+    paymentResult.value = response
+    showRechargeModal.value = false
+  } catch (e) {
+    console.error('Failed to create payment:', e)
+  }
   paying.value = false
 }
 

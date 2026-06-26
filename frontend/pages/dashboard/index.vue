@@ -13,7 +13,7 @@
       </div>
       <div class="border rounded-xl p-4">
         <div class="text-sm text-gray-500 mb-1">API Keys</div>
-        <div class="text-2xl font-semibold">{{ apiKeys.length }}</div>
+        <div class="text-2xl font-semibold">{{ apiKeysCount }}</div>
       </div>
       <div class="border rounded-xl p-4">
         <div class="text-sm text-gray-500 mb-1">本月调用</div>
@@ -67,6 +67,28 @@ const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 
 const balance = ref(0)
-const apiKeys = ref<any[]>([])
+const apiKeysCount = ref(0)
 const requestCount = ref(0)
+
+onMounted(async () => {
+  // Fetch balance
+  try {
+    const response = await $fetch<{ balance: number }>(`${apiBase}/api/billing/balance`, {
+      headers: useRequestHeaders(['cookie']),
+    })
+    balance.value = response.balance
+  } catch (e) {
+    console.error('Failed to fetch balance:', e)
+  }
+
+  // Fetch API keys count
+  try {
+    const response = await $fetch<{ keys: any[] }>(`${apiBase}/api/keys`, {
+      headers: useRequestHeaders(['cookie']),
+    })
+    apiKeysCount.value = response.keys?.length || 0
+  } catch (e) {
+    console.error('Failed to fetch API keys:', e)
+  }
+})
 </script>

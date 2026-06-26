@@ -15,7 +15,11 @@
 
     <!-- Keys List -->
     <div class="border rounded-xl overflow-hidden">
-      <div v-if="keys.length === 0" class="p-12 text-center text-gray-400">
+      <div v-if="loading" class="p-12 text-center text-gray-400">
+        加载中...
+      </div>
+
+      <div v-else-if="keys.length === 0" class="p-12 text-center text-gray-400">
         <p>还没有 API Key</p>
         <p class="text-sm mt-1">点击上方按钮创建</p>
       </div>
@@ -29,6 +33,12 @@
           <div>
             <div class="font-medium text-sm">{{ key.name || 'Unnamed' }}</div>
             <div class="text-xs text-gray-400 font-mono mt-1">{{ key.key_prefix }}...</div>
+            <div class="text-xs text-gray-400 mt-1">
+              创建于 {{ new Date(key.created_at).toLocaleDateString('zh-CN') }}
+              <span v-if="key.last_used_at">
+                · 最后使用 {{ new Date(key.last_used_at).toLocaleDateString('zh-CN') }}
+              </span>
+            </div>
           </div>
           <div class="flex items-center gap-3">
             <span
@@ -106,25 +116,52 @@ definePageMeta({
   middleware: 'auth',
 })
 
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
+
 const keys = ref<any[]>([])
+const loading = ref(true)
 const showCreateModal = ref(false)
 const newKeyName = ref('')
 const creating = ref(false)
 const newKey = ref('')
 
 const loadKeys = async () => {
-  keys.value = []
+  loading.value = true
+  try {
+    const response = await $fetch<{ keys: any[] }>(`${apiBase}/api/keys`)
+    keys.value = response.keys || []
+  } catch (e) {
+    console.error('Failed to load keys:', e)
+  }
+  loading.value = false
 }
 
 const createKey = async () => {
   creating.value = true
+  try {
+    const response = await $fetch<{ key: string; id: string }>(`${apiBase}/api/keys`, {
+      method: 'POST',
+      body: { name: newKeyName.value },
+    })
+    newKey.value = response.key
+    showCreateModal.value = false
+    newKeyName.value = ''
+    await loadKeys()
+  } catch (e) {
+    console.error('Failed to create key:', e)
+  }
   creating.value = false
-  showCreateModal.value = false
 }
 
 const deleteKey = async (id: string) => {
   if (confirm('确定删除？')) {
-    // TODO
+    try {
+      await $fetch(`${apiBase}/api/keys/${id}`, { method: 'DELETE' })
+      await loadKeys()
+    } catch (e) {
+      console.error('Failed to delete key:', e)
+    }
   }
 }
 
