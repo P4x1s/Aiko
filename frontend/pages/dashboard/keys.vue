@@ -116,6 +116,7 @@ definePageMeta({
   middleware: 'auth',
 })
 
+const supabase = useSupabaseClient()
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 
@@ -126,10 +127,19 @@ const newKeyName = ref('')
 const creating = ref(false)
 const newKey = ref('')
 
+const getAuthHeaders = async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  return {
+    'Authorization': `Bearer ${session?.access_token || ''}`,
+    'Content-Type': 'application/json',
+  }
+}
+
 const loadKeys = async () => {
   loading.value = true
   try {
-    const response = await $fetch<{ keys: any[] }>(`${apiBase}/api/keys`)
+    const headers = await getAuthHeaders()
+    const response = await $fetch<{ keys: any[] }>(`${apiBase}/api/keys`, { headers })
     keys.value = response.keys || []
   } catch (e) {
     console.error('Failed to load keys:', e)
@@ -140,8 +150,10 @@ const loadKeys = async () => {
 const createKey = async () => {
   creating.value = true
   try {
+    const headers = await getAuthHeaders()
     const response = await $fetch<{ key: string; id: string }>(`${apiBase}/api/keys`, {
       method: 'POST',
+      headers,
       body: { name: newKeyName.value },
     })
     newKey.value = response.key
@@ -157,7 +169,8 @@ const createKey = async () => {
 const deleteKey = async (id: string) => {
   if (confirm('确定删除？')) {
     try {
-      await $fetch(`${apiBase}/api/keys/${id}`, { method: 'DELETE' })
+      const headers = await getAuthHeaders()
+      await $fetch(`${apiBase}/api/keys/${id}`, { method: 'DELETE', headers })
       await loadKeys()
     } catch (e) {
       console.error('Failed to delete key:', e)

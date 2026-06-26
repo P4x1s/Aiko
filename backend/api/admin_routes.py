@@ -5,77 +5,43 @@ from pydantic import BaseModel
 from typing import Optional
 from services.auth import get_current_user
 from services.supabase_client import get_supabase_client
-from services.billing_service import get_balance
 
 router = APIRouter(prefix="/api/admin")
 
 
 def require_admin(user: dict = Depends(get_current_user)) -> dict:
     """Check if user is admin."""
-    supabase = get_supabase_client()
-    result = supabase.table("profiles") \
-        .select("role") \
-        .eq("id", user["sub"]) \
-        .execute()
-
-    if not result.data or result.data[0].get("role") != "admin":
+    role = user.get("user_metadata", {}).get("role")
+    if role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
 
 
 @router.get("/users")
 async def list_users(
-    limit: int = 20,
+    limit: int = 50,
     offset: int = 0,
     user: dict = Depends(require_admin),
 ):
-    """List all users."""
+    """List all users from auth.users."""
     supabase = get_supabase_client()
-    result = supabase.table("profiles") \
-        .select("*") \
-        .order("created_at", desc=True) \
-        .range(offset, offset + limit - 1) \
-        .execute()
 
-    count = supabase.table("profiles") \
-        .select("id", count="exact") \
-        .execute()
+    # Use Supabase admin API to list users
+    result = supabase.auth.admin.list_users()
+
+    users = []
+    for u in (result or []):
+        users.append({
+            "id": u.id,
+            "email": u.email,
+            "role": u.user_metadata.get("role", "user"),
+            "created_at": str(u.created_at) if hasattr(u, 'created_at') else "",
+        })
 
     return {
-        "users": result.data or [],
-        "total": count.count if hasattr(count, 'count') else 0,
+        "users": users,
+        "total": len(users),
     }
-
-
-@router.get("/users/{user_id}")
-async def get_user(user_id: str, user: dict = Depends(require_admin)):
-    """Get user details."""
-    supabase = get_supabase_client()
-    result = supabase.table("profiles") \
-        .select("*") \
-        .eq("id", user_id) \
-        .execute()
-
-    if not result.data:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    return result.data[0]
-
-
-@router.put("/users/{user_id}")
-async def update_user(
-    user_id: str,
-    data: dict,
-    user: dict = Depends(require_admin),
-):
-    """Update user (role, balance, etc)."""
-    supabase = get_supabase_client()
-    result = supabase.table("profiles") \
-        .update(data) \
-        .eq("id", user_id) \
-        .execute()
-
-    return {"success": True}
 
 
 @router.get("/stats")
@@ -83,10 +49,9 @@ async def get_system_stats(user: dict = Depends(require_admin)):
     """Get system statistics."""
     supabase = get_supabase_client()
 
-    # Total users
-    users = supabase.table("profiles") \
-        .select("id", count="exact") \
-        .execute()
+    # List users
+    users = supabase.auth.admin.list_users()
+    user_count = len(users) if users else 0
 
     # Total API keys
     keys = supabase.table("api_keys") \
@@ -94,7 +59,7 @@ async def get_system_stats(user: dict = Depends(require_admin)):
         .execute()
 
     # Total requests today
-    from datetime import datetime, timedelta
+    from datetime import datetime
     today = datetime.utcnow().date().isoformat()
     today_requests = supabase.table("request_logs") \
         .select("id", count="exact") \
@@ -109,19 +74,11 @@ async def get_system_stats(user: dict = Depends(require_admin)):
 
     total_cost = sum(r.get("cost", 0) for r in (today_cost.data or []))
 
-    # Total balance across all users
-    all_balances = supabase.table("profiles") \
-        .select("balance") \
-        .execute()
-
-    total_balance = sum(float(r.get("balance", 0)) for r in (all_balances.data or []))
-
     return {
-        "total_users": users.count if hasattr(users, 'count') else 0,
+        "total_users": user_count,
         "total_api_keys": keys.count if hasattr(keys, 'count') else 0,
         "today_requests": today_requests.count if hasattr(today_requests, 'count') else 0,
         "today_cost": round(total_cost, 4),
-        "total_balance": round(total_balance, 2),
     }
 
 
@@ -134,7 +91,7 @@ async def list_requests(
     """List recent API requests."""
     supabase = get_supabase_client()
     result = supabase.table("request_logs") \
-        .select("*, profiles!inner(email)") \
+        .select("*") \
         .order("created_at", desc=True) \
         .range(offset, offset + limit - 1) \
         .execute()

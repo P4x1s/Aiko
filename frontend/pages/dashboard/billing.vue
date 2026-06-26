@@ -69,17 +69,34 @@
         <h3 class="font-semibold mb-4">选择充值金额</h3>
 
         <!-- Pricing Tiers -->
-        <div class="grid grid-cols-2 gap-3 mb-6">
+        <div class="grid grid-cols-3 gap-3 mb-4">
           <button
             v-for="tier in tiers"
             :key="tier.id"
-            @click="selectedTier = tier"
+            @click="selectedTier = tier; customAmount = ''"
             :class="selectedTier?.id === tier.id ? 'border-gray-900 bg-gray-50' : 'border-gray-200'"
             class="border-2 rounded-lg p-3 text-left hover:border-gray-400 transition"
           >
             <div class="font-semibold">¥{{ tier.amount }}</div>
             <div v-if="tier.bonus > 0" class="text-xs text-green-600">送 ¥{{ tier.bonus }}</div>
           </button>
+        </div>
+
+        <!-- Custom Amount -->
+        <div class="mb-6">
+          <div class="text-sm text-gray-600 mb-2">或自定义金额</div>
+          <div class="flex items-center gap-2">
+            <span class="text-gray-500">¥</span>
+            <input
+              v-model="customAmount"
+              type="number"
+              min="1"
+              max="10000"
+              @input="selectedTier = null"
+              class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-gray-900 outline-none"
+              placeholder="输入金额"
+            />
+          </div>
         </div>
 
         <!-- Payment Method -->
@@ -108,7 +125,7 @@
           </button>
           <button
             @click="handlePayment"
-            :disabled="!selectedTier || !selectedMethod || paying"
+            :disabled="(!selectedTier && !customAmount) || !selectedMethod || paying"
             class="px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 disabled:opacity-50"
           >
             {{ paying ? '处理中...' : '立即支付' }}
@@ -152,6 +169,7 @@ const tiers = ref<any[]>([])
 const loading = ref(true)
 const showRechargeModal = ref(false)
 const selectedTier = ref<any>(null)
+const customAmount = ref('')
 const selectedMethod = ref('alipay')
 const paying = ref(false)
 const paymentResult = ref<any>(null)
@@ -184,10 +202,12 @@ const loadData = async () => {
 const handlePayment = async () => {
   paying.value = true
   try {
+    const amount = selectedTier.value?.amount || parseFloat(customAmount.value)
     const response = await $fetch<any>(`${apiBase}/api/billing/create-payment`, {
       method: 'POST',
       body: {
-        tier_id: selectedTier.value.id,
+        tier_id: selectedTier.value?.id || 'custom',
+        amount: amount,
         payment_method: selectedMethod.value,
       },
     })

@@ -8,9 +8,9 @@
           </NuxtLink>
           <div class="hidden md:flex items-center space-x-6 text-sm text-gray-500">
             <NuxtLink to="/" class="hover:text-gray-900 transition">首页</NuxtLink>
+            <NuxtLink to="/docs" class="hover:text-gray-900 transition">文档</NuxtLink>
             <a href="#features" class="hover:text-gray-900 transition">功能</a>
             <a href="#models" class="hover:text-gray-900 transition">模型</a>
-            <a href="#pricing" class="hover:text-gray-900 transition">价格</a>
           </div>
         </div>
         <div class="flex items-center space-x-3">
