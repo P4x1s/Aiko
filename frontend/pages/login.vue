@@ -40,17 +40,11 @@
         >
           {{ loading ? '登录中...' : '登录' }}
         </button>
-
-        <div class="text-center text-sm text-gray-500 space-y-1">
-          <p>
-            <NuxtLink to="/forgot-password" class="text-gray-900 hover:underline">忘记密码？</NuxtLink>
-          </p>
-          <p>
-            还没有账号？
-            <NuxtLink to="/register" class="text-gray-900 hover:underline">立即注册</NuxtLink>
-          </p>
-        </div>
       </form>
+
+      <p class="text-center text-sm text-gray-500 mt-4">
+        <NuxtLink to="/forgot-password" class="text-gray-900 hover:underline">忘记密码？</NuxtLink>
+      </p>
     </div>
   </div>
 </template>
