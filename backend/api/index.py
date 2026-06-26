@@ -19,6 +19,19 @@ app.add_middleware(
 app.include_router(v1_routes.router)
 
 
+@app.get("/")
+async def root():
+    return {
+        "name": "艾柯 (Aiko) API 中转站",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/health",
+            "models": "/v1/models",
+            "chat": "/v1/chat/completions",
+        },
+    }
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
