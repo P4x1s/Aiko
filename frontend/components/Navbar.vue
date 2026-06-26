@@ -24,8 +24,8 @@
             <NuxtLink to="/dashboard/billing" class="text-sm text-gray-600 hover:text-gray-900">
               余额
             </NuxtLink>
-            <NuxtLink v-if="isAdmin" to="/admin" class="text-sm text-gray-600 hover:text-gray-900">
-              管理
+            <NuxtLink v-if="isAdmin" to="/admin" class="text-sm bg-gray-900 text-white px-3 py-1 rounded hover:bg-gray-800">
+              管理后台
             </NuxtLink>
             <span class="text-gray-200">|</span>
             <span class="text-sm text-gray-500">{{ user.email }}</span>
@@ -43,12 +43,6 @@
             >
               登录
             </NuxtLink>
-            <NuxtLink
-              to="/register"
-              class="text-sm bg-gray-900 text-white px-4 py-1.5 rounded-md hover:bg-gray-800 transition"
-            >
-              注册
-            </NuxtLink>
           </template>
         </div>
       </div>
@@ -61,6 +55,7 @@ const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 
 const isAdmin = ref(false)
+const debugInfo = ref('')
 
 const checkAdmin = async () => {
   if (!user.value) {
@@ -68,13 +63,25 @@ const checkAdmin = async () => {
     return
   }
 
-  const { data } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.value.id)
-    .single()
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.value.id)
+      .maybeSingle()
 
-  isAdmin.value = data?.role === 'admin'
+    if (error) {
+      debugInfo.value = `Error: ${error.message}`
+      isAdmin.value = false
+      return
+    }
+
+    isAdmin.value = data?.role === 'admin'
+    debugInfo.value = `User: ${user.value.id}, Role: ${data?.role}`
+  } catch (e: any) {
+    debugInfo.value = `Exception: ${e.message}`
+    isAdmin.value = false
+  }
 }
 
 const handleLogout = async () => {
@@ -82,11 +89,13 @@ const handleLogout = async () => {
   navigateTo('/login')
 }
 
+// 页面加载时检查
 onMounted(() => {
   checkAdmin()
 })
 
+// 监听用户变化
 watch(user, () => {
   checkAdmin()
-})
+}, { immediate: true })
 </script>
