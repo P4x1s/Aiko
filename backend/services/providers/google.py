@@ -27,31 +27,35 @@ class GoogleProvider(BaseProvider):
             contents.append({"role": role, "parts": [{"text": msg["content"]}]})
 
         payload = {"contents": contents}
-        url = f"{self.BASE_URL}/models/{model_name}:generateContent?key={self.api_key}"
+        headers = {
+            "x-goog-api-key": self.api_key,
+            "Content-Type": "application/json",
+        }
+        url = f"{self.BASE_URL}/models/{model_name}:generateContent"
 
         if stream:
-            url = f"{self.BASE_URL}/models/{model_name}:streamGenerateContent?key={self.api_key}"
-            return self._stream_completion(payload, url)
+            url = f"{self.BASE_URL}/models/{model_name}:streamGenerateContent"
+            return self._stream_completion(payload, url, headers)
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 url,
                 json=payload,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
                 timeout=120.0,
             )
             response.raise_for_status()
             return self._format_response(response.json())
 
     async def _stream_completion(
-        self, payload: dict[str, Any], url: str
+        self, payload: dict[str, Any], url: str, headers: dict[str, str]
     ) -> AsyncIterator[dict[str, Any]]:
         async with httpx.AsyncClient() as client:
             async with client.stream(
                 "POST",
                 url,
                 json=payload,
-                headers={"Content-Type": "application/json"},
+                headers=headers,
                 timeout=120.0,
             ) as response:
                 response.raise_for_status()

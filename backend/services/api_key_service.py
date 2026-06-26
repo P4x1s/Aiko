@@ -1,5 +1,6 @@
 import hashlib
 import secrets
+from datetime import datetime, timezone
 from typing import Optional
 from .supabase_client import get_supabase_client
 
@@ -54,7 +55,7 @@ def verify_api_key(raw_key: str) -> Optional[dict]:
 
     if result.data:
         supabase.table("api_keys").update(
-            {"last_used_at": "now()"}
+            {"last_used_at": datetime.now(timezone.utc).isoformat()}
         ).eq("id", result.data[0]["id"]).execute()
         return result.data[0]
     return None

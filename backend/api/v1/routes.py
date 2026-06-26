@@ -2,11 +2,12 @@ import json
 import os
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
 
 from api.schemas import ChatCompletionRequest
 from services.providers import OpenAIProvider, AnthropicProvider, GoogleProvider
+from services.api_key_service import verify_api_key
 
 router = APIRouter(prefix="/v1")
 
@@ -36,8 +37,27 @@ model_provider_map: dict[str, str] = {
 }
 
 
+async def verify_api_key_auth(authorization: str = Header(...)) -> dict:
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization header format",
+        )
+    raw_key = authorization[7:]
+    key_record = verify_api_key(raw_key)
+    if not key_record:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or inactive API key",
+        )
+    return key_record
+
+
 @router.post("/chat/completions")
-async def chat_completions(request: ChatCompletionRequest) -> dict[str, Any]:
+async def chat_completions(
+    request: ChatCompletionRequest,
+    api_key_record: dict = Depends(verify_api_key_auth),
+) -> dict[str, Any]:
     provider_name = model_provider_map.get(request.model)
     if not provider_name:
         raise HTTPException(
@@ -63,12 +83,13 @@ async def chat_completions(request: ChatCompletionRequest) -> dict[str, Any]:
     try:
         if request.stream:
             async def stream_response():
-                async for chunk in await provider.chat_completion(
+                iterator = provider.chat_completion(
                     model=request.model,
                     messages=[msg.model_dump() for msg in request.messages],
                     stream=True,
                     **kwargs,
-                ):
+                )
+                async for chunk in iterator:
                     yield f"data: {json.dumps(chunk)}\n\n"
                 yield "data: [DONE]\n\n"
 
@@ -84,8 +105,8 @@ async def chat_completions(request: ChatCompletionRequest) -> dict[str, Any]:
                 **kwargs,
             )
             return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/models")
