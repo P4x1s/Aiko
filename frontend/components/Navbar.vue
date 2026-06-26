@@ -18,6 +18,12 @@
             <NuxtLink to="/dashboard" class="text-sm text-gray-600 hover:text-gray-900">
               控制台
             </NuxtLink>
+            <NuxtLink to="/dashboard/keys" class="text-sm text-gray-600 hover:text-gray-900">
+              Keys
+            </NuxtLink>
+            <NuxtLink to="/dashboard/billing" class="text-sm text-gray-600 hover:text-gray-900">
+              余额
+            </NuxtLink>
             <span class="text-gray-200">|</span>
             <span class="text-sm text-gray-500">{{ user.email }}</span>
             <button

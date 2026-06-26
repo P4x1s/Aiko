@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -8,6 +9,8 @@ from fastapi.responses import StreamingResponse
 from api.schemas import ChatCompletionRequest
 from services.providers import OpenAIProvider, AnthropicProvider, GoogleProvider
 from services.api_key_service import verify_api_key
+from services.billing_service import get_balance, deduct_balance, record_usage
+from services.token_counter import count_message_tokens, calculate_cost
 
 router = APIRouter(prefix="/v1")
 
@@ -72,6 +75,15 @@ async def chat_completions(
             detail=f"Provider '{provider_name}' is not configured",
         )
 
+    # Check balance
+    user_id = api_key_record["user_id"]
+    balance = get_balance(user_id)
+    if balance <= 0:
+        raise HTTPException(
+            status_code=402,
+            detail="Insufficient balance. Please recharge.",
+        )
+
     kwargs: dict[str, Any] = {}
     if request.temperature is not None:
         kwargs["temperature"] = request.temperature
@@ -80,18 +92,48 @@ async def chat_completions(
     if request.top_p is not None:
         kwargs["top_p"] = request.top_p
 
+    # Estimate input tokens
+    messages_dicts = [msg.model_dump() for msg in request.messages]
+    input_tokens = count_message_tokens(messages_dicts)
+
+    start_time = time.time()
+
     try:
         if request.stream:
             async def stream_response():
+                nonlocal input_tokens
+                output_tokens = 0
                 iterator = provider.chat_completion(
                     model=request.model,
-                    messages=[msg.model_dump() for msg in request.messages],
+                    messages=messages_dicts,
                     stream=True,
                     **kwargs,
                 )
                 async for chunk in iterator:
                     yield f"data: {json.dumps(chunk)}\n\n"
+                    # Count output tokens from chunks
+                    if "choices" in chunk:
+                        for choice in chunk["choices"]:
+                            if "delta" in choice and "content" in choice["delta"]:
+                                output_tokens += count_message_tokens([{"content": choice["delta"]["content"]}])
+
                 yield "data: [DONE]\n\n"
+
+                # Calculate and deduct cost
+                cost = calculate_cost(request.model, input_tokens, output_tokens)
+                latency_ms = int((time.time() - start_time) * 1000)
+
+                deduct_balance(user_id, cost, f"{request.model} ({input_tokens}+{output_tokens} tokens)")
+                record_usage(
+                    user_id=user_id,
+                    api_key_id=api_key_record["id"],
+                    provider=provider_name,
+                    model=request.model,
+                    tokens_input=input_tokens,
+                    tokens_output=output_tokens,
+                    cost=cost,
+                    latency_ms=latency_ms,
+                )
 
             return StreamingResponse(
                 stream_response(),
@@ -100,10 +142,37 @@ async def chat_completions(
         else:
             result = await provider.chat_completion(
                 model=request.model,
-                messages=[msg.model_dump() for msg in request.messages],
+                messages=messages_dicts,
                 stream=False,
                 **kwargs,
             )
+
+            # Calculate output tokens
+            output_tokens = 0
+            if "usage" in result:
+                output_tokens = result["usage"].get("completion_tokens", 0)
+            elif "choices" in result:
+                for choice in result["choices"]:
+                    if "message" in choice and "content" in choice["message"]:
+                        output_tokens = count_message_tokens([{"content": choice["message"]["content"]}])
+                        break
+
+            # Calculate and deduct cost
+            cost = calculate_cost(request.model, input_tokens, output_tokens)
+            latency_ms = int((time.time() - start_time) * 1000)
+
+            deduct_balance(user_id, cost, f"{request.model} ({input_tokens}+{output_tokens} tokens)")
+            record_usage(
+                user_id=user_id,
+                api_key_id=api_key_record["id"],
+                provider=provider_name,
+                model=request.model,
+                tokens_input=input_tokens,
+                tokens_output=output_tokens,
+                cost=cost,
+                latency_ms=latency_ms,
+            )
+
             return result
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
