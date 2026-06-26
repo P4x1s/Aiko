@@ -41,10 +41,20 @@ const loading = ref(true)
 const error = ref('')
 
 onMounted(async () => {
+  // Handle hash-based auth (Supabase default)
   const { hash } = route.query
+  // Handle code-based auth (PKCE)
+  const { code } = route.query
 
   if (hash) {
+    // Hash format: #access_token=xxx&refresh_token=xxx
     const { error: authError } = await supabase.auth.exchangeCodeForSession(hash as string)
+    if (authError) {
+      error.value = authError.message
+    }
+  } else if (code) {
+    // Code format: ?code=xxx
+    const { error: authError } = await supabase.auth.exchangeCodeForSession(code as string)
     if (authError) {
       error.value = authError.message
     }
