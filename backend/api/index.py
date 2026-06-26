@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.v1 import routes as v1_routes
 
 app = FastAPI(
-    title="AI Gateway",
-    description="Unified AI API proxy for Chinese developers",
+    title="艾柯 (Aiko) API 中转站",
+    description="统一的 AI API 中转站，让国内开发者轻松调用多个厂商的模型",
     version="1.0.0",
 )
 
