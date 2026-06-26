@@ -7,3 +7,4 @@ python-dotenv==1.0.0
 python-jose[cryptography]==3.3.0
 pytest==7.4.4
 pytest-asyncio==0.23.3
+supabase==2.3.0
