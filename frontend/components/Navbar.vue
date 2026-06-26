@@ -24,6 +24,9 @@
             <NuxtLink to="/dashboard/billing" class="text-sm text-gray-600 hover:text-gray-900">
               余额
             </NuxtLink>
+            <NuxtLink to="/admin" class="text-sm text-gray-600 hover:text-gray-900">
+              管理
+            </NuxtLink>
             <span class="text-gray-200">|</span>
             <span class="text-sm text-gray-500">{{ user.email }}</span>
             <button
